@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f59e0b">
 
-  <title>Confirmación de cuenta | Meyaj</title>
+  <title>Meyaj | Verificación de cuenta</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -30,9 +30,9 @@
     .contenedor {
       width: 100%;
       max-width: 480px;
-      padding: 40px 28px;
+      padding: 35px 28px;
       text-align: center;
-      background: white;
+      background: #fff;
       border-radius: 20px;
       box-shadow: 0 10px 35px rgba(0, 0, 0, 0.10);
     }
@@ -42,11 +42,12 @@
       font-weight: bold;
       color: #f59e0b;
       margin-bottom: 25px;
+      letter-spacing: 2px;
     }
 
     .icono {
-      width: 85px;
-      height: 85px;
+      width: 82px;
+      height: 82px;
       margin: 0 auto 22px;
       display: flex;
       justify-content: center;
@@ -54,30 +55,36 @@
       border-radius: 50%;
       background: #dcfce7;
       color: #15803d;
-      font-size: 48px;
+      font-size: 44px;
+    }
+
+    .icono-error {
+      background: #fee2e2;
+      color: #b91c1c;
     }
 
     h1 {
-      font-size: 27px;
-      margin-bottom: 15px;
+      font-size: 26px;
+      margin: 0 0 15px;
     }
 
     p {
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.6;
       color: #555;
     }
 
     .boton {
       display: inline-block;
-      margin-top: 20px;
-      padding: 14px 25px;
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px 20px;
       border: none;
       border-radius: 10px;
       background: #f59e0b;
       color: #171717;
       text-decoration: none;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: bold;
       cursor: pointer;
     }
@@ -86,19 +93,38 @@
       background: #e68a00;
     }
 
+    .boton:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .campo {
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+      padding: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 16px;
+      outline-color: #f59e0b;
+    }
+
     .estado {
       margin-top: 18px;
       font-size: 14px;
-      color: #666;
       overflow-wrap: anywhere;
     }
 
     .oculto {
-      display: none;
+      display: none !important;
     }
 
-    .error {
+    .error-texto {
       color: #b91c1c;
+    }
+
+    .exito-texto {
+      color: #15803d;
     }
 
     .cargando {
@@ -116,139 +142,303 @@
         transform: rotate(360deg);
       }
     }
+
+    .pie {
+      margin-top: 25px;
+      color: #999;
+      font-size: 12px;
+    }
   </style>
 </head>
 
 <body>
   <main class="contenedor">
+
     <div class="logo">MEYAJ</div>
 
+    <!-- ESTADO DE PROCESAMIENTO -->
     <section id="procesando">
       <div class="cargando"></div>
-      <h1>Verificando tu cuenta</h1>
-      <p>
-        Estamos comprobando el enlace de confirmación.
-        Espera un momento, por favor.
-      </p>
+      <h1>Verificando enlace</h1>
+      <p>Estamos comprobando tu enlace. Espera un momento.</p>
     </section>
 
+    <!-- CONFIRMACIÓN EXITOSA -->
     <section id="exito" class="oculto">
       <div class="icono">&#10003;</div>
-
       <h1>¡Cuenta verificada!</h1>
-
       <p>
         Tu correo electrónico se confirmó correctamente.
         Ya puedes iniciar sesión en Meyaj y comenzar a
         conectar, trabajar y crecer.
       </p>
+    </section>
 
-      <p class="estado">
-        La verificación de tu cuenta se completó correctamente.
+    <!-- FORMULARIO DE RECUPERACIÓN -->
+    <section id="recuperar" class="oculto">
+      <div class="icono">&#128273;</div>
+      <h1>Restablecer contraseña</h1>
+      <p>
+        Escribe tu nueva contraseña y confírmala para
+        recuperar el acceso a tu cuenta de Meyaj.
+      </p>
+
+      <form id="formRecuperar">
+        <input
+          class="campo"
+          id="nuevaPassword"
+          type="password"
+          placeholder="Nueva contraseña"
+          minlength="6"
+          autocomplete="new-password"
+          required
+        >
+
+        <input
+          class="campo"
+          id="confirmarPassword"
+          type="password"
+          placeholder="Confirmar nueva contraseña"
+          minlength="6"
+          autocomplete="new-password"
+          required
+        >
+
+        <button class="boton" id="botonGuardar" type="submit">
+          Guardar nueva contraseña
+        </button>
+      </form>
+
+      <p id="mensajeRecuperacion" class="estado" aria-live="polite"></p>
+    </section>
+
+    <!-- CONTRASEÑA ACTUALIZADA -->
+    <section id="recuperacionExitosa" class="oculto">
+      <div class="icono">&#10003;</div>
+      <h1>¡Contraseña actualizada!</h1>
+      <p>
+        Tu contraseña se cambió correctamente.
+        Ya puedes volver a Meyaj e iniciar sesión con tu nueva contraseña.
       </p>
     </section>
 
+    <!-- ERROR -->
     <section id="error" class="oculto">
-      <h1>No pudimos verificar tu cuenta</h1>
-
+      <div class="icono icono-error">!</div>
+      <h1>No pudimos procesar el enlace</h1>
       <p id="mensajeError">
         El enlace puede haber caducado o ya haber sido utilizado.
       </p>
-
       <p>
-        Regresa a Meyaj y solicita un nuevo correo de confirmación
-        si todavía no has verificado tu cuenta.
+        Regresa a Meyaj y solicita un nuevo correo si es necesario.
       </p>
     </section>
+
+    <div class="pie">Meyaj — Conecta, trabaja y crece.</div>
   </main>
 
   <script>
-    // Sustituye estos valores por los de tu proyecto Supabase.
-    const SUPABASE_URL = 'https://lokrttzriaiuhkiljzlb.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_MH9eNUTHf9iudpxBNs5QPA_2NK2lcfL';
+    // CONFIGURACIÓN DE SUPABASE
+    const SUPABASE_URL =
+      'https://lokrttzriaiuhkiljzlb.supabase.co';
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      'sb_publishable_MH9eNUTHf9iudpxBNs5QPA_2NK2lcfL';
 
     const procesando = document.getElementById('procesando');
-    const exito = document.getElementById('exito');
-    const error = document.getElementById('error');
+    const secciones = [
+      'exito',
+      'recuperar',
+      'recuperacionExitosa',
+      'error'
+    ];
+
     const mensajeError = document.getElementById('mensajeError');
+    const formRecuperar = document.getElementById('formRecuperar');
+    const nuevaPassword = document.getElementById('nuevaPassword');
+    const confirmarPassword = document.getElementById('confirmarPassword');
+    const mensajeRecuperacion = document.getElementById('mensajeRecuperacion');
+    const botonGuardar = document.getElementById('botonGuardar');
 
-    function mostrarResultado(resultado) {
+    let cliente = null;
+    let procesandoFormulario = false;
+
+    function mostrarSeccion(id) {
       procesando.classList.add('oculto');
-      exito.classList.add('oculto');
-      error.classList.add('oculto');
 
-      if (resultado === 'exito') {
-        exito.classList.remove('oculto');
-      } else {
-        error.classList.remove('oculto');
-      }
+      secciones.forEach((nombre) => {
+        document.getElementById(nombre).classList.add('oculto');
+      });
+
+      document.getElementById(id).classList.remove('oculto');
     }
 
-    async function verificarCuenta() {
+    function mostrarError(mensaje) {
+      mensajeError.textContent = mensaje;
+      mostrarSeccion('error');
+    }
+
+    function limpiarParametrosUrl() {
+      // Evita conservar el token en la barra de direcciones.
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
+      );
+    }
+
+    async function iniciar() {
       try {
-        if (
-          SUPABASE_URL.includes('TU_PROYECTO') ||
-          SUPABASE_PUBLISHABLE_KEY.includes('TU_CLAVE')
-        ) {
-          throw new Error(
-            'Falta configurar la URL y la clave pública de Supabase.'
-          );
-        }
-
-        const parametros = new URLSearchParams(
-          window.location.search
-        );
-
-        const tokenHash = parametros.get('token_hash');
-        const tipo = parametros.get('type');
-
-        if (!tokenHash || tipo !== 'email') {
-          throw new Error(
-            'El enlace no contiene un token de confirmación válido.'
-          );
-        }
-
-        const cliente = window.supabase.createClient(
+        cliente = window.supabase.createClient(
           SUPABASE_URL,
           SUPABASE_PUBLISHABLE_KEY
         );
 
-        const { data, error: errorVerificacion } =
-          await cliente.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: 'email'
-          });
+        const url = new URL(window.location.href);
+        const parametros = url.searchParams;
 
-        if (errorVerificacion) {
-          throw errorVerificacion;
-        }
+        const tokenHash = parametros.get('token_hash');
+        const tipo = parametros.get('type');
 
-        if (!data.user || !data.user.email_confirmed_at) {
-          throw new Error(
-            'No pudimos confirmar el correo electrónico.'
-          );
-        }
-
-        // Eliminamos el token de la barra de direcciones.
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname
+        // Supabase también puede devolver tokens en el fragmento URL.
+        const fragmento = new URLSearchParams(
+          url.hash.startsWith('#') ? url.hash.substring(1) : url.hash
         );
 
-        mostrarResultado('exito');
+        const accessToken = fragmento.get('access_token');
+        const refreshToken = fragmento.get('refresh_token');
+        const tipoFragmento = fragmento.get('type');
+
+        // FLUJO 1: ENLACE CON TOKEN HASH
+        if (tokenHash && (tipo === 'recovery' || tipo === 'email')) {
+          const { data, error } = await cliente.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: tipo
+          });
+
+          if (error) throw error;
+
+          limpiarParametrosUrl();
+
+          if (tipo === 'recovery') {
+            if (!data.session) {
+              throw new Error(
+                'No se pudo iniciar la sesión de recuperación. Solicita un nuevo enlace.'
+              );
+            }
+
+            mostrarSeccion('recuperar');
+          } else {
+            if (!data.user || !data.user.email_confirmed_at) {
+              throw new Error('No se pudo confirmar el correo electrónico.');
+            }
+
+            mostrarSeccion('exito');
+          }
+
+          return;
+        }
+
+        // FLUJO 2: TOKEN EN EL FRAGMENTO DE LA URL
+        if (accessToken && refreshToken) {
+          const { data, error } = await cliente.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (error) throw error;
+
+          limpiarParametrosUrl();
+
+          if (tipoFragmento === 'recovery') {
+            if (!data.session) {
+              throw new Error(
+                'No se pudo iniciar la recuperación de contraseña.'
+              );
+            }
+
+            mostrarSeccion('recuperar');
+          } else {
+            mostrarSeccion('exito');
+          }
+
+          return;
+        }
+
+        throw new Error(
+          'El enlace está incompleto, ha caducado o ya fue utilizado. Solicita uno nuevo.'
+        );
 
       } catch (e) {
-        console.error('Error de verificación:', e);
+        console.error('Error al procesar el enlace:', e);
 
-        mensajeError.textContent = e.message ||
-          'El enlace no es válido o ha caducado.';
-
-        mostrarResultado('error');
+        mostrarError(
+          e.message || 'No se pudo procesar el enlace.'
+        );
       }
     }
 
-    verificarCuenta();
+    // GUARDAR LA NUEVA CONTRASEÑA
+    formRecuperar.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+
+      if (procesandoFormulario) return;
+
+      const password = nuevaPassword.value;
+      const confirmacion = confirmarPassword.value;
+
+      mensajeRecuperacion.textContent = '';
+      mensajeRecuperacion.className = 'estado';
+
+      if (password.length < 6) {
+        mensajeRecuperacion.textContent =
+          'La contraseña debe tener al menos 6 caracteres.';
+        mensajeRecuperacion.classList.add('error-texto');
+        return;
+      }
+
+      if (password !== confirmacion) {
+        mensajeRecuperacion.textContent =
+          'Las contraseñas no coinciden.';
+        mensajeRecuperacion.classList.add('error-texto');
+        return;
+      }
+
+      procesandoFormulario = true;
+      botonGuardar.disabled = true;
+      botonGuardar.textContent = 'Guardando...';
+
+      try {
+        const { error } = await cliente.auth.updateUser({
+          password: password
+        });
+
+        if (error) throw error;
+
+        formRecuperar.reset();
+
+        // Cerramos la sesión de recuperación después del cambio.
+        await cliente.auth.signOut();
+
+        mostrarSeccion('recuperacionExitosa');
+
+      } catch (e) {
+        console.error('Error al cambiar contraseña:', e);
+
+        mensajeRecuperacion.textContent =
+          e.message || 'No se pudo actualizar la contraseña.';
+
+        mensajeRecuperacion.classList.add('error-texto');
+
+      } finally {
+        procesandoFormulario = false;
+        botonGuardar.disabled = false;
+        botonGuardar.textContent = 'Guardar nueva contraseña';
+      }
+    });
+
+    iniciar();
   </script>
 </body>
 </html>
+
