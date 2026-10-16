@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f59e0b">
+
+  <title>Confirmación de cuenta | Meyaj</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #fff7e6, #fef3c7);
+      color: #222;
+    }
+
+    .contenedor {
+      width: 100%;
+      max-width: 480px;
+      padding: 40px 28px;
+      text-align: center;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.10);
+    }
+
+    .logo {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f59e0b;
+      margin-bottom: 25px;
+    }
+
+    .icono {
+      width: 85px;
+      height: 85px;
+      margin: 0 auto 22px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 48px;
+    }
+
+    h1 {
+      font-size: 27px;
+      margin-bottom: 15px;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #555;
+    }
+
+    .boton {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 14px 25px;
+      border: none;
+      border-radius: 10px;
+      background: #f59e0b;
+      color: #171717;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .boton:hover {
+      background: #e68a00;
+    }
+
+    .estado {
+      margin-top: 18px;
+      font-size: 14px;
+      color: #666;
+      overflow-wrap: anywhere;
+    }
+
+    .oculto {
+      display: none;
+    }
+
+    .error {
+      color: #b91c1c;
+    }
+
+    .cargando {
+      width: 42px;
+      height: 42px;
+      margin: 10px auto 20px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #f59e0b;
+      border-radius: 50%;
+      animation: girar 1s linear infinite;
+    }
+
+    @keyframes girar {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="contenedor">
+    <div class="logo">MEYAJ</div>
+
+    <section id="procesando">
+      <div class="cargando"></div>
+      <h1>Verificando tu cuenta</h1>
+      <p>
+        Estamos comprobando el enlace de confirmación.
+        Espera un momento, por favor.
+      </p>
+    </section>
+
+    <section id="exito" class="oculto">
+      <div class="icono">&#10003;</div>
+
+      <h1>¡Cuenta verificada!</h1>
+
+      <p>
+        Tu correo electrónico se confirmó correctamente.
+        Ya puedes iniciar sesión en Meyaj y comenzar a
+        conectar, trabajar y crecer.
+      </p>
+
+      <p class="estado">
+        La verificación de tu cuenta se completó correctamente.
+      </p>
+    </section>
+
+    <section id="error" class="oculto">
+      <h1>No pudimos verificar tu cuenta</h1>
+
+      <p id="mensajeError">
+        El enlace puede haber caducado o ya haber sido utilizado.
+      </p>
+
+      <p>
+        Regresa a Meyaj y solicita un nuevo correo de confirmación
+        si todavía no has verificado tu cuenta.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    // Sustituye estos valores por los de tu proyecto Supabase.
+    const SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'TU_CLAVE_PUBLICABLE';
+
+    const procesando = document.getElementById('procesando');
+    const exito = document.getElementById('exito');
+    const error = document.getElementById('error');
+    const mensajeError = document.getElementById('mensajeError');
+
+    function mostrarResultado(resultado) {
+      procesando.classList.add('oculto');
+      exito.classList.add('oculto');
+      error.classList.add('oculto');
+
+      if (resultado === 'exito') {
+        exito.classList.remove('oculto');
+      } else {
+        error.classList.remove('oculto');
+      }
+    }
+
+    async function verificarCuenta() {
+      try {
+        if (
+          SUPABASE_URL.includes('TU_PROYECTO') ||
+          SUPABASE_PUBLISHABLE_KEY.includes('TU_CLAVE')
+        ) {
+          throw new Error(
+            'Falta configurar la URL y la clave pública de Supabase.'
+          );
+        }
+
+        const parametros = new URLSearchParams(
+          window.location.search
+        );
+
+        const tokenHash = parametros.get('token_hash');
+        const tipo = parametros.get('type');
+
+        if (!tokenHash || tipo !== 'email') {
+          throw new Error(
+            'El enlace no contiene un token de confirmación válido.'
+          );
+        }
+
+        const cliente = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_PUBLISHABLE_KEY
+        );
+
+        const { data, error: errorVerificacion } =
+          await cliente.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: 'email'
+          });
+
+        if (errorVerificacion) {
+          throw errorVerificacion;
+        }
+
+        if (!data.user || !data.user.email_confirmed_at) {
+          throw new Error(
+            'No pudimos confirmar el correo electrónico.'
+          );
+        }
+
+        // Eliminamos el token de la barra de direcciones.
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        mostrarResultado('exito');
+
+      } catch (e) {
+        console.error('Error de verificación:', e);
+
+        mensajeError.textContent = e.message ||
+          'El enlace no es válido o ha caducado.';
+
+        mostrarResultado('error');
+      }
+    }
+
+    verificarCuenta();
+  </script>
+</body>
+</html>
